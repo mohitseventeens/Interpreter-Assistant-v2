@@ -22,9 +22,36 @@ let socket, mediaRecorder, stream;
 
 const statusEl = document.querySelector("#status");
 const transcriptEl = document.querySelector("#transcript");
+const timerEl = document.querySelector("#timer");
 const startBtn = document.querySelector("#start");
 const stopBtn = document.querySelector("#stop");
 const browserAudioBtn = document.querySelector("#browser-audio");
+
+let startTime;
+let timerInterval;
+
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function startTimer() {
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        timerEl.textContent = formatTime(elapsedTime);
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    const elapsedTime = Date.now() - startTime;
+    timerEl.textContent = formatTime(elapsedTime);
+}
 
 // Helper: initialize the Deepgram WebSocket connection and media recorder event handling
 function initDeepgramConnectionAndRecording(currentStream) {
@@ -43,6 +70,7 @@ function initDeepgramConnectionAndRecording(currentStream) {
     socket.onopen = () => {
         statusEl.textContent = "Connected to Deepgram";
         console.log("WebSocket Opened");
+        startTimer();
 
         // Set up MediaRecorder to send audio data
         mediaRecorder = new MediaRecorder(currentStream, { mimeType: "audio/webm" });
@@ -68,6 +96,7 @@ function initDeepgramConnectionAndRecording(currentStream) {
     socket.onclose = () => {
         console.log("WebSocket Closed");
         statusEl.textContent = "Disconnected";
+        stopTimer();
     };
 
     socket.onerror = (error) => {
@@ -123,6 +152,7 @@ function stopRecording() {
         socket.close();
     }
     statusEl.textContent = "Stopped";
+    stopTimer();
 }
 
 // Attach event listeners

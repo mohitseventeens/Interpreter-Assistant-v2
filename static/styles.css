@@ -49,6 +49,19 @@ h1 {
     background-color: white;
     border: 1px solid #e2e8f0;
     font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.timer-container {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+#timer {
+    font-weight: 500;
+    color: var(--text-color);
+    margin-left: 5px;
 }
 
 .controls {
