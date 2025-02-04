@@ -21,7 +21,8 @@ function createDeepgramUrl(params = {}) {
 let socket, mediaRecorder, stream;
 
 const statusEl = document.querySelector("#status");
-const transcriptEl = document.querySelector("#transcript");
+const transcriptEnEl = document.querySelector("#transcript-en");
+const transcriptFrEl = document.querySelector("#transcript-fr");
 const timerEl = document.querySelector("#timer");
 const startBtn = document.querySelector("#start");
 const stopBtn = document.querySelector("#stop");
@@ -56,51 +57,95 @@ function stopTimer() {
 // Helper: initialize the Deepgram WebSocket connection and media recorder event handling
 function initDeepgramConnectionAndRecording(currentStream) {
     // Define your Deepgram parameters here
-    const deepgramParams = {
+    // Create two WebSocket connections for dual transcription
+    const deepgramParamsEn = {
+        model: "nova-2",
+        language: "en",
+        smart_format: "true",
+        interim_results: "true"
+    };
+
+    const deepgramParamsFr = {
         model: "nova-2",
         language: "fr",
         smart_format: "true",
         interim_results: "true"
     };
 
-    const DEEPGRAM_URL = createDeepgramUrl(deepgramParams);
+    const DEEPGRAM_URL_EN = createDeepgramUrl(deepgramParamsEn);
+    const DEEPGRAM_URL_FR = createDeepgramUrl(deepgramParamsFr);
 
-    socket = new WebSocket(DEEPGRAM_URL, ["token", DEEPGRAM_API_KEY]);
+    // Create separate WebSocket connections for English and French
+    const socketEn = new WebSocket(DEEPGRAM_URL_EN, ["token", DEEPGRAM_API_KEY]);
+    const socketFr = new WebSocket(DEEPGRAM_URL_FR, ["token", DEEPGRAM_API_KEY]);
 
-    socket.onopen = () => {
-        statusEl.textContent = "Connected to Deepgram";
-        console.log("WebSocket Opened");
-        startTimer();
+    // Handle WebSocket connections
+    let connectionsEstablished = 0;
+    
+    const handleConnectionOpen = () => {
+        connectionsEstablished++;
+        if (connectionsEstablished === 2) {
+            statusEl.textContent = "Connected to Deepgram";
+            console.log("WebSocket Connections Opened");
+            startTimer();
 
-        // Set up MediaRecorder to send audio data
-        mediaRecorder = new MediaRecorder(currentStream, { mimeType: "audio/webm" });
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
-                socket.send(event.data);
-            }
-        };
+            // Set up MediaRecorder to send audio data to both connections
+            mediaRecorder = new MediaRecorder(currentStream, { mimeType: "audio/webm" });
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    if (socketEn.readyState === WebSocket.OPEN) {
+                        socketEn.send(event.data);
+                    }
+                    if (socketFr.readyState === WebSocket.OPEN) {
+                        socketFr.send(event.data);
+                    }
+                }
+            };
 
-        // Start sending data every 400ms (adjust as needed)
-        mediaRecorder.start(400);
-    };
-
-    socket.onmessage = (message) => {
-        const received = JSON.parse(message.data);
-        const transcript = received.channel?.alternatives[0]?.transcript;
-        if (transcript && received.is_final) {
-            console.log(transcript);
-            transcriptEl.textContent += transcript + " ";
+            // Start sending data every 400ms (adjust as needed)
+            mediaRecorder.start(400);
         }
     };
 
-    socket.onclose = () => {
-        console.log("WebSocket Closed");
+    socketEn.onopen = handleConnectionOpen;
+    socketFr.onopen = handleConnectionOpen;
+
+    // Handle messages from both WebSocket connections
+    socketEn.onmessage = (message) => {
+        const received = JSON.parse(message.data);
+        const transcript = received.channel?.alternatives[0]?.transcript;
+        if (transcript && received.is_final) {
+            console.log("English:", transcript);
+            transcriptEnEl.textContent += transcript + " ";
+        }
+    };
+
+    socketFr.onmessage = (message) => {
+        const received = JSON.parse(message.data);
+        const transcript = received.channel?.alternatives[0]?.transcript;
+        if (transcript && received.is_final) {
+            console.log("French:", transcript);
+            transcriptFrEl.textContent += transcript + " ";
+        }
+    };
+
+    socketEn.onclose = () => {
+        console.log("English WebSocket Closed");
+        stopTimer();
+    };
+
+    socketFr.onclose = () => {
+        console.log("French WebSocket Closed");
         statusEl.textContent = "Disconnected";
         stopTimer();
     };
 
-    socket.onerror = (error) => {
-        console.error("WebSocket Error", error);
+    socketEn.onerror = (error) => {
+        console.error("English WebSocket Error", error);
+    };
+
+    socketFr.onerror = (error) => {
+        console.error("French WebSocket Error", error);
     };
 }
 
@@ -141,19 +186,43 @@ async function startBrowserAudioRecording() {
     }
 }
 
-// Stop recording and close WebSocket
+// Stop recording and close all connections
 function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-        // Stop all tracks (microphone or display capture)
-        stream.getTracks().forEach(track => track.stop());
-    }
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
-    }
-    statusEl.textContent = "Stopped";
+    // Immediately update the UI to show stopping status.
+    statusEl.textContent = "Stopping... Please wait";
     stopTimer();
+
+    // Stop the MediaRecorder if it's active.
+    if (mediaRecorder?.state !== "inactive") {
+        mediaRecorder.stop();
+    }
+
+    // Stop all media tracks.
+    if (stream) {
+        stream.getTracks().forEach(track => {
+            try {
+                track.stop();
+            } catch (error) {
+                console.error("Error stopping media track:", error);
+            }
+        });
+    }
+
+    // Close both WebSocket connections.
+    [socketEn, socketFr].forEach((socket, index) => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            try {
+                socket.close();
+            } catch (error) {
+                console.error(`Error closing ${index === 0 ? "English" : "French"} WebSocket:`, error);
+            }
+        }
+    });
+
+    // Update UI and stop the timer.
+    statusEl.textContent = "Stopped";
 }
+
 
 // Attach event listeners
 startBtn.addEventListener("click", startRecording);
