@@ -52,8 +52,8 @@ function initDeepgramConnectionAndRecording(currentStream) {
             }
         };
 
-        // Start sending data every 250ms (adjust as needed)
-        mediaRecorder.start(250);
+        // Start sending data every 400ms (adjust as needed)
+        mediaRecorder.start(400);
     };
 
     socket.onmessage = (message) => {

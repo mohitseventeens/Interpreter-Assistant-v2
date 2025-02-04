@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpreter Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Interpreter Assistant</h1>
+            <p class="subtitle">Real-Time Speech Recognition for Professionals</p>
+        </header>
+
+        <div class="status-container">
+            <div id="status" class="status-box">Not Connected</div>
+        </div>
+
+        <div class="controls">
+            <button id="start" class="btn primary">Start Recording</button>
+            <button id="browser-audio" class="btn secondary">Browser Audio</button>
+            <button id="stop" class="btn danger">Stop Recording</button>
+        </div>
+
+        <div class="transcript-container">
+            <h2>Transcript</h2>
+            <div id="transcript" class="transcript-box"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
