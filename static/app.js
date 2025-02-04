@@ -1,4 +1,15 @@
-const DEEPGRAM_API_KEY = "4a714aaff85d2ea694f7b5e1255f39fdfecb4774"; // Replace with your Deepgram API key
+// Fetch Deepgram API key from server
+let DEEPGRAM_API_KEY;
+
+fetch('/get-deepgram-key')
+    .then(response => response.json())
+    .then(data => {
+        DEEPGRAM_API_KEY = data.key;
+    })
+    .catch(error => {
+        console.error('Error fetching API key:', error);
+        statusEl.textContent = 'Error: Unable to get API key';
+    });
 
 // Define a function to create the Deepgram URL with parameters
 function createDeepgramUrl(params = {}) {
