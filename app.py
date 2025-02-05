@@ -9,7 +9,7 @@ app.config['DEEPGRAM_API_KEY'] = os.getenv('DEEPGRAM_API_KEY')
 
 @app.route("/")
 def index():
-    return render_template("index2.html")
+    return render_template("index.html")
 
 @app.route("/get-deepgram-key")
 def get_deepgram_key():

@@ -3,15 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Speech-to-Text</title>
+    <title>Interpreter Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Real-Time Speech Recognition</h1>
-    <p id="status">Not Connected</p>
-    <p id="transcript"></p>
-    <button id="start">Start Recording (Microphone)</button>
-    <button id="browser-audio">Browser-audio</button>
-    <button id="stop">Stop Recording</button>
+    <div class="layout-container">
+        <!-- Left Column (20%) -->
+        <div class="left-column">
+            <header>
+                <h1>Interpreter Assistant</h1>
+                <p class="subtitle">Real-Time Speech Recognition for Professionals</p>
+            </header>
+
+            <div class="status-container">
+                <div id="status" class="status-box">Not Connected</div>
+                <div class="timer-container">
+                    <span>Elapsed Time:</span>
+                    <span id="timer">00:00:00</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="start" class="btn primary">Start Recording</button>
+                <button id="browser-audio" class="btn secondary">Browser Audio</button>
+                <button id="stop" class="btn danger">Stop Recording</button>
+            </div>
+        </div>
+
+        <!-- Right Column (80%) -->
+        <div class="right-column">
+            <!-- First row: Transcription boxes -->
+            <div class="row">
+                <div class="box">
+                    <div class="box-heading">English Transcription</div>
+                    <div id="live-transcript-en"></div>
+                </div>
+                <div class="box">
+                    <div class="box-heading">French Transcription</div>
+                    <div id="live-transcript-fr"></div>
+                </div>
+            </div>
+            <!-- Second row: Translation boxes (Only final transcription for now) -->
+            <div class="row">
+                <div class="box">
+                    <div class="box-heading">English Translation</div>
+                    <div id="final-transcript-en"></div>
+                </div>
+                <div class="box">
+                    <div class="box-heading">French Translation</div>
+                    <div id="final-transcript-fr"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>

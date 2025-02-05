@@ -1,6 +1,5 @@
 // Fetch Deepgram API key from server
 let DEEPGRAM_API_KEY;
-
 fetch('/get-deepgram-key')
     .then(response => response.json())
     .then(data => {
@@ -21,8 +20,6 @@ function createDeepgramUrl(params = {}) {
 let socket, mediaRecorder, stream;
 
 const statusEl = document.querySelector("#status");
-const transcriptEnEl = document.querySelector("#transcript-en");
-const transcriptFrEl = document.querySelector("#transcript-fr");
 const timerEl = document.querySelector("#timer");
 const startBtn = document.querySelector("#start");
 const stopBtn = document.querySelector("#stop");
@@ -52,6 +49,29 @@ function stopTimer() {
     clearInterval(timerInterval);
     const elapsedTime = Date.now() - startTime;
     timerEl.textContent = formatTime(elapsedTime);
+}
+
+// ======================= NEW CODE: Live Transcription Functionality =======================
+
+// Insert the following new function below the initDeepgramConnectionAndRecording function (but before startRecording)
+function handleDeepgramMessage(received, lang) {
+    const transcript = received.channel?.alternatives[0]?.transcript;
+    if (!transcript) return;
+
+    // Select the live transcription element based on language
+    const liveTranscriptEl = document.querySelector(lang === 'en' ? "#live-transcript-en" : "#live-transcript-fr");
+    // Select the final transcript element based on language
+    const finalTranscriptEl = document.querySelector(lang === 'en' ? "#final-transcript-en" : "#final-transcript-fr");
+
+    if (!received.is_final) {
+        // Update the live transcription text in real time
+        liveTranscriptEl.textContent = transcript;
+    } else {
+        // Clear the live transcription once final transcript is received
+        liveTranscriptEl.textContent = "";
+        // Append the final transcript with extra line breaks for spacing
+        finalTranscriptEl.innerHTML += transcript + "<br><br>";
+    }
 }
 
 // Helper: initialize the Deepgram WebSocket connection and media recorder event handling
@@ -111,22 +131,19 @@ function initDeepgramConnectionAndRecording(currentStream) {
     socketFr.onopen = handleConnectionOpen;
 
     // Handle messages from both WebSocket connections
+
+    // Modified:
     socketEn.onmessage = (message) => {
         const received = JSON.parse(message.data);
-        const transcript = received.channel?.alternatives[0]?.transcript;
-        if (transcript && received.is_final) {
-            console.log("English:", transcript);
-            transcriptEnEl.textContent += transcript + " ";
-        }
+        // NEW: Handle live transcription updates for English
+        handleDeepgramMessage(received, 'en');
     };
 
+    // Modified:
     socketFr.onmessage = (message) => {
         const received = JSON.parse(message.data);
-        const transcript = received.channel?.alternatives[0]?.transcript;
-        if (transcript && received.is_final) {
-            console.log("French:", transcript);
-            transcriptFrEl.textContent += transcript + " ";
-        }
+        // NEW: Handle live transcription updates for French
+        handleDeepgramMessage(received, 'fr');
     };
 
     socketEn.onclose = () => {
@@ -222,7 +239,6 @@ function stopRecording() {
     // Update UI and stop the timer.
     statusEl.textContent = "Stopped";
 }
-
 
 // Attach event listeners
 startBtn.addEventListener("click", startRecording);
