@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Realtime API Chat Test</title>
+  <style>
+    /* Simple styling for the output area and status */
+    #output, #status {
+      border: 1px solid #ccc;
+      padding: 1em;
+      margin-top: 1em;
+      font-family: Arial, sans-serif;
+      white-space: pre-wrap;
+    }
+    #controls {
+      margin-top: 1em;
+    }
+    button {
+      margin-right: 0.5em;
+      padding: 0.5em 1em;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Realtime API Chat Test</h1>
+  <p>Open your browser console for debugging logs.</p>
+  
+  <!-- Output container for the ChatGPT response -->
+  <div id="output">Waiting for response...</div>
+  
+  <!-- Status display -->
+  <div id="status">Status: Not connected</div>
+  
+  <!-- Controls for connection -->
+  <div id="controls">
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+  </div>
+  
+  <!-- Load the test script -->
+  <script src="{{ url_for('static', filename='openai_realtime.js') }}"></script>
+</body>
+</html>
